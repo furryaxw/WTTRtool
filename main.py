@@ -1,5 +1,7 @@
 import os
 import re
+from logging import exception
+
 import git
 from config import Config
 
@@ -192,28 +194,34 @@ def main():
                     use_local = False
                 wt_import(atrf_name, wt_dict, use_local)
             case "设置":
-                match inp[1]:
-                    case "战雷":
-                        inp_t = ' '.join(inp[2:])
-                        if inp_t == "" or not os.path.exists(inp_t + "/localization.blk"):
-                            print("无效的文件夹，不做任何操作")
-                        else:
-                            config.write({"warthunder_path": inp_t})
-                            wt_dict = inp_t
-                            print(f"战争雷霆文件夹已更新为{inp_t}后续使用会自动填入")
-                    case "git":
-                        inp_t = ''.join(inp[2:])
-                        if inp_t == "":
-                            git_url = "https://gitee.com/furryaxw/WTTR-lang.git"
-                            print("git仓库已恢复默认")
-                        elif re.match("(https?://\w+\.(com|cn|edu|hk)+(/[\w-_:@&?=+,.!/~*'%$]+)+.git|\w+/\w+$)", inp_t):
-                            git_url = inp_t
-                            print(f"git仓库已设置为{git_url}")
-                        else:
-                            print("无效的git地址，不做任何操作")
-                        config.write({"use_git": git_url})
-                    case _:
-                        print("未知指令\n战雷/git")
+                try:
+                    match inp[1]:
+                        case "战雷":
+                            inp_t = ' '.join(inp[2:])
+                            if inp_t == "" or not os.path.exists(inp_t + "/localization.blk"):
+                                print("无效的文件夹，不做任何操作")
+                            else:
+                                config.write({"warthunder_path": inp_t})
+                                wt_dict = inp_t
+                                print(f"战争雷霆文件夹已更新为{inp_t}后续使用会自动填入")
+                        case "git":
+                            inp_t = ''.join(inp[2:])
+                            if inp_t == "":
+                                git_url = "https://gitee.com/furryaxw/WTTR-lang.git"
+                                print("git仓库已恢复默认")
+                            elif re.match("(https?://\w+\.(com|cn|edu|hk)+(/[\w-_:@&?=+,.!/~*'%$]+)+.git|\w+/\w+$)", inp_t):
+                                git_url = inp_t
+                                print(f"git仓库已设置为{git_url}")
+                            else:
+                                print("无效的git地址，不做任何操作")
+                            config.write({"use_git": git_url})
+                        case _:
+                            print("未知指令\n战雷/git")
+                except IndexError:
+                    print("未知指令\n战雷/git")
+                    pass
+            case "":
+                pass
             case _:
                 print("未知指令\n导出/导入/设置")
 
