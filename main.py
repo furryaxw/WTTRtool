@@ -125,21 +125,21 @@ def inport(f, path):
 
 
 def main():
-    # if checkupdate:
-    #     print("正在检查更新，请稍后......")
-    #     subprocess.run('git pull', shell=True)
-    # inp = input('选择操作"导出"到atrf/"导入"到战争雷霆：')
-    # match inp:
-    #     case "导出":
-    #         wt_dict = input("输入战争雷霆翻译文件目录：")
-    #         export(wt_dict, "./lang_raw")
-    #     case "导入":
-    #         wt_dict = input("输入战争雷霆游戏翻译文件目录：")
-    #         atrf = input("输入atrf翻译文件：")
-    #         inport(atrf, wt_dict)
-    #     case _:
-    #         print("未知指令")
-    export('lang', "./lang_raw")
+    if checkupdate:
+        print("正在检查更新，请稍后......")
+        subprocess.run('git pull', shell=True)
+    inp = input('选择操作"导出"到atrf/"导入"到战争雷霆：')
+    match inp:
+        case "导出":
+            wt_dict = input("输入战争雷霆翻译文件目录：")
+            export(wt_dict, "./lang_raw")
+        case "导入":
+            wt_dict = input("输入战争雷霆游戏翻译文件目录：")
+            atrf = input("输入atrf翻译文件：")
+            inport(atrf, wt_dict)
+        case _:
+            print("未知指令")
+
 
 if __name__ == "__main__":
     main()
