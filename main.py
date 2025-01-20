@@ -3,18 +3,22 @@ import re
 import subprocess
 
 key_pattern = re.compile(';\n"([a-zA-Z0-9_\n]+(?:/[a-zA-Z0-9_\n]+)+)"')
+checkupdate = False
 
 
 def read_f(f):
     tr_array = []
     rows = []
-    with open(f, 'r', encoding='utf-8') as file:
-        try:
-            f_row = str(file.readline()).split('\";\"')
-            cn_loc = f_row.index('"<Chinese>"')
-        except ValueError:
-            return
-        reader = file.readlines()
+    try:
+        with open(f, 'r', encoding='utf-8') as file:
+            try:
+                f_row = str(file.readline()).split(';')
+                cn_loc = f_row.index('"<Chinese>"')
+            except ValueError:
+                return -1
+            reader = file.readlines()
+    except FileNotFoundError:
+        return -1
     reader = ''.join(reader)
     reader = ';;\n' + reader
     tr_key = key_pattern.findall(reader)
@@ -30,13 +34,15 @@ def read_f(f):
 
 def export(path, original, fname="output"):
     with open(f"{fname}.atrf", "wt", encoding='utf-8') as atr:
-        atr.write("[WTTRtool Translate File v1.0]\n")
+        atr.write("[WTTRtool Translate File v1.0 Key/Original/New]\n")
     files = [entry for entry in os.listdir(path) if
              os.path.isfile(os.path.join(path, entry)) and entry.endswith(".csv")]
     for f in files:
-        print(f)
-        tr_ = read_f(path + '/' + f)
-        otr_ = read_f(original + '/' + f)
+        tr_ = read_f(path.rstrip('\\').rstrip('/') + '/' + f)
+        otr_ = read_f(original.rstrip('\\').rstrip('/') + '/' + f)
+        if tr_ == -1 or otr_ == -1:
+            print(f"{f}文件异常，无法比对，已跳过该文件")
+            continue
         cache = f'[{f}]\n'
         try:
             for key in tr_.keys():
@@ -50,6 +56,7 @@ def export(path, original, fname="output"):
         if cache != f'[{f}]\n':
             with open(f"{fname}.atrf", "at", encoding='utf-8') as atr:
                 atr.write(cache)
+        print(f)
 
 
 def write_f(f, d):
@@ -98,7 +105,7 @@ def write_f(f, d):
 
 def inport(f, path):
     with open(f, "r", encoding='utf-8') as atr:
-        art = re.findall('(\[.*\.csv\])(\n[^\[]*)?', atr.read())
+        art = re.findall(r'(\[.*\.csv\])(\n[^\[]*)?', atr.read())
     for file in art:
         print(file[0])
         this_file = file[0][1:-1]
@@ -112,8 +119,27 @@ def inport(f, path):
                 trans[line][0] = trans[line][0].strip('"')
                 trans[line][1] = trans[line][1].strip('"')
                 trans[line][2] = trans[line][2].strip('"')
-        if not path.endswith('/'):
-            path = path + '/'
+        path = path.rstrip('\\').rstrip('/') + '/'
         write_f(path + this_file, trans)
     return
 
+
+def main():
+    # if checkupdate:
+    #     print("正在检查更新，请稍后......")
+    #     subprocess.run('git pull', shell=True)
+    # inp = input('选择操作"导出"到atrf/"导入"到战争雷霆：')
+    # match inp:
+    #     case "导出":
+    #         wt_dict = input("输入战争雷霆翻译文件目录：")
+    #         export(wt_dict, "./lang_raw")
+    #     case "导入":
+    #         wt_dict = input("输入战争雷霆游戏翻译文件目录：")
+    #         atrf = input("输入atrf翻译文件：")
+    #         inport(atrf, wt_dict)
+    #     case _:
+    #         print("未知指令")
+    export('lang', "./lang_raw")
+
+if __name__ == "__main__":
+    main()
