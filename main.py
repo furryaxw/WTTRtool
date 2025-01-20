@@ -1,9 +1,10 @@
 import os
 import re
-import subprocess
+import git
 
 key_pattern = re.compile(';\n"([a-zA-Z0-9_\n]+(?:/[a-zA-Z0-9_\n]+)+)"')
-checkupdate = False
+lang_path = './WTTR-lang'
+checkupdate = True
 
 
 def read_f(f):
@@ -129,7 +130,24 @@ def wt_import(f, path):
 def main():
     if checkupdate:
         print("正在检查更新，请稍后......")
-        subprocess.run('git pull', shell=True)
+        try:
+            if os.path.exists(lang_path):
+                git.repo.Repo(lang_path).git.pull()
+            else:
+                git.repo.Repo.clone_from('https://gitee.com/furryaxw/WTTR-lang.git', to_path=lang_path)
+        except git.exc.InvalidGitRepositoryError:
+            try:
+                print("更新失败，无效的git目录")
+                input("按enter重试更新")
+                os.remove(lang_path)
+                return main()
+            except PermissionError:
+                print(f"无法删除目录：{lang_path}，请手动删除后重试")
+                if input("输入C无视错误继续程序: ") != "C":
+                    return -1
+        except Exception as e:
+            print("发生未知错误："+str(e))
+
     inp = input('选择操作"导出"到atrf/"导入"到战争雷霆：')
     match inp:
         case "导出":
