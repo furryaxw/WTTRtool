@@ -1,7 +1,5 @@
 import os
 import re
-from logging import exception
-
 import git
 from config import Config
 
