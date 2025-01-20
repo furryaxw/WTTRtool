@@ -32,7 +32,7 @@ def read_f(f):
     return dict(zip(tr_key, tr_array))
 
 
-def export(path, original, fname="output"):
+def wt_export(path, original, fname="output"):
     with open(f"{fname}.atrf", "wt", encoding='utf-8') as atr:
         atr.write("[WTTRtool Translate File v1.0 Key/Original/New]\n")
     files = [entry for entry in os.listdir(path) if
@@ -59,9 +59,11 @@ def export(path, original, fname="output"):
         print(f)
 
 
-def write_f(f, d):
+def write_f(f, d, raw=None):
     rows = []
-    with open(f, "r", encoding='utf-8') as file:
+    if raw is None:
+        raw = f
+    with open(raw, "r", encoding='utf-8') as file:
         f_row = str(file.readline()).split(';')
         try:
             cn_loc = f_row.index('"<Chinese>"')
@@ -103,7 +105,7 @@ def write_f(f, d):
         file.write(data)
 
 
-def inport(f, path):
+def wt_import(f, path):
     with open(f, "r", encoding='utf-8') as atr:
         art = re.findall(r'(\[.*\.csv\])(\n[^\[]*)?', atr.read())
     for file in art:
@@ -120,7 +122,7 @@ def inport(f, path):
                 trans[line][1] = trans[line][1].strip('"')
                 trans[line][2] = trans[line][2].strip('"')
         path = path.rstrip('\\').rstrip('/') + '/'
-        write_f(path + this_file, trans)
+        write_f(path + this_file, trans, "./lang_raw/" + this_file)
     return
 
 
@@ -132,11 +134,12 @@ def main():
     match inp:
         case "导出":
             wt_dict = input("输入战争雷霆翻译文件目录：")
-            export(wt_dict, "./lang_raw")
+            atrf_name = input("输入atrf翻译文件名（默认output）：")
+            wt_export(wt_dict, "./lang_raw", atrf_name)
         case "导入":
             wt_dict = input("输入战争雷霆游戏翻译文件目录：")
             atrf = input("输入atrf翻译文件：")
-            inport(atrf, wt_dict)
+            wt_import(atrf, wt_dict)
         case _:
             print("未知指令")
 
