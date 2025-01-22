@@ -1,9 +1,9 @@
 import os
 import re
-import git
 from config import Config
 
 key_pattern = re.compile(';\n"([a-zA-Z0-9_\n]+(?:/[a-zA-Z0-9_\n]+)+)"')
+lang_path = ""
 
 
 def read_f(f):
@@ -32,7 +32,9 @@ def read_f(f):
     return dict(zip(tr_key, tr_array))
 
 
-def wt_export(path, original, fname="output"):
+def wt_export(path, original, fname=""):
+    if fname == "":
+        fname = "output"
     with open(f"{fname}.atrf", "wt", encoding='utf-8') as atr:
         atr.write("[WTTRtool Translate File v1.0 Key/Original/New]\n")
     files = [entry for entry in os.listdir(path) if
@@ -64,12 +66,16 @@ def write_f(f, d, raw=None):
     if raw is None:
         raw = f
     with open(raw, "r", encoding='utf-8') as file:
-        f_row = str(file.readline()).split(';')
+        frow = str(file.readline())
+        f_row = frow.split(';')
         try:
             cn_loc = f_row.index('"<Chinese>"')
         except ValueError:
             return
         reader = file.readlines()
+
+    with open(f, "w", encoding='utf-8') as file:
+        file.write(frow)
 
     reader = ''.join(reader)
     reader = ';;\n' + reader
@@ -97,15 +103,18 @@ def write_f(f, d, raw=None):
         if type(tr_row[trans[0]]) is not str:
             tr_row[trans[0]][cn_loc - 1] = t_trans
 
-    data = ''
     for key in tr_row.keys():
-        line = '";"'.join(tr_row[key])
-        data = f"{data}\n\"{key}\";\"{line};"
-    with open(f, "w", encoding='utf-8') as file:
-        file.write(data)
+        if type(tr_row[key]) == list:
+            line = '";"'.join(tr_row[key])
+        else:
+            line = ''.join(tr_row[key])
+        data = f"\"{key}\";\"{line};\n"
+        with open(f, "a", encoding='utf-8') as file:
+            file.write(data)
 
 
 def wt_import(f, path, use_local=False):
+    global lang_path
     with open(f, "r", encoding='utf-8') as atr:
         art = re.findall(r'(\[.*\.csv\])(\n[^\[]*)?', atr.read())
     for file in art:
@@ -125,11 +134,12 @@ def wt_import(f, path, use_local=False):
         if use_local:
             write_f(path + this_file, trans)
         else:
-            write_f(path + this_file, trans, "./lang_raw/" + this_file)
+            write_f(path + this_file, trans, lang_path + this_file)
     return
 
 
 def main():
+    global lang_path
     default = {
         "check_update": True,
         "lang_path": 'WTTR-lang',
@@ -143,7 +153,7 @@ def main():
     try:
         conf = config.read()
         check_update = conf["check_update"]
-        lang_path = conf["lang_path"]
+        lang_path = conf["lang_path"].rstrip('/') + '/'
         git_url = conf["use_git"]
         wt_dict = conf["warthunder_path"]
     except KeyError:
@@ -156,6 +166,11 @@ def main():
         wt_dict = conf["warthunder_path"]
 
     if check_update:
+        # try:
+        import git
+        # except ImportError:
+        #     print("检测不到git环境，正在尝试自动安装")
+        #     git.Git.refresh(path='./Git/cmd/git.exe')
         print("正在检查更新，请稍后......")
         try:
             if os.path.exists(lang_path):
@@ -181,11 +196,14 @@ def main():
                 if wt_dict == "":
                     wt_dict = input("输入战争雷霆翻译文件目录：")
                 atrf_name = input("输入atrf翻译文件名（默认output）：")
-                wt_export(wt_dict, "./lang_raw", atrf_name)
+                wt_export(wt_dict, lang_path, atrf_name)
             case "导入":
                 if wt_dict == "":
                     wt_dict = input("输入战争雷霆游戏翻译文件目录：")
                 atrf_name = input("输入atrf翻译文件：")
+                if not os.path.exists(atrf_name):
+                    print("atrf文件无效")
+                    continue
                 if input("是否使用联网语言更新（Y/n）").lower() == 'n':
                     use_local = True
                 else:
@@ -207,7 +225,8 @@ def main():
                             if inp_t == "":
                                 git_url = "https://gitee.com/furryaxw/WTTR-lang.git"
                                 print("git仓库已恢复默认")
-                            elif re.match("(https?://\w+\.(com|cn|edu|hk)+(/[\w-_:@&?=+,.!/~*'%$]+)+.git|\w+/\w+$)", inp_t):
+                            elif re.match("(https?://\w+\.(com|cn|edu|hk)+(/[\w-_:@&?=+,.!/~*'%$]+)+.git|\w+/\w+$)",
+                                          inp_t):
                                 git_url = inp_t
                                 print(f"git仓库已设置为{git_url}")
                             else:
