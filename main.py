@@ -166,11 +166,26 @@ def main():
         wt_dict = conf["warthunder_path"]
 
     if check_update:
-        # try:
-        import git
-        # except ImportError:
-        #     print("检测不到git环境，正在尝试自动安装")
-        #     git.Git.refresh(path='./Git/cmd/git.exe')
+        try:
+            import git
+        except ImportError:
+            if not os.path.exists("./Git/cmd/git.exe"):
+                print("检测不到git环境，正在尝试自动安装......")
+                print("下载过程中不会显示进度条，请耐心等待")
+                import requests
+                import zipfile
+                url = "https://gitee.com/furryaxw/WTTRtool/releases/download/v1.1fix2/Git.zip"
+                r = requests.get(url, stream=True)
+                with open("git.zip", "wb") as f:
+                    for ch in r:
+                        f.write(ch)
+                print("下载完成，正在解压...")
+                zip_file = zipfile.ZipFile("git.zip")
+                zip_list = zip_file.namelist()
+                for f in zip_list:
+                    zip_file.extract(f, "./")
+                zip_file.close()
+            git.Git.refresh(path='./Git/cmd/git.exe')
         print("正在检查更新，请稍后......")
         try:
             if os.path.exists(lang_path):
