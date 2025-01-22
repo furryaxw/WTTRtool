@@ -108,6 +108,7 @@ def write_f(f, d, raw=None):
             line = '";"'.join(tr_row[key])
         else:
             line = ''.join(tr_row[key])
+        line = line.lstrip('"')
         data = f"\"{key}\";\"{line};\n"
         with open(f, "a", encoding='utf-8') as file:
             file.write(data)
@@ -117,6 +118,11 @@ def wt_import(f, path, use_local=False):
     global lang_path
     with open(f, "r", encoding='utf-8') as atr:
         art = re.findall(r'(\[.*\.csv\])(\n[^\[]*)?', atr.read())
+    if not use_local:
+        exclude = []
+        for file in art:
+            exclude.append(file[0][1:-1])
+        copy(lang_path, path, exclude)
     for file in art:
         print(file[0])
         this_file = file[0][1:-1]
@@ -136,6 +142,18 @@ def wt_import(f, path, use_local=False):
         else:
             write_f(path + this_file, trans, lang_path + this_file)
     return
+
+
+def copy(path1, path2, exclude=None):
+    if exclude is None:
+        exclude = []
+    path1 = path1[:-1]
+    files = [entry for entry in os.listdir(path1) if
+             os.path.isfile(os.path.join(path1, entry)) and entry.endswith(".csv")]
+    for f in files:
+        if f not in exclude:
+            print(f"[{f}]")
+            os.system(f"copy /y {path1}\\{f} {path2} > {os.devnull}")
 
 
 def main():
@@ -205,17 +223,20 @@ def main():
         except Exception as e:
             print("发生未知错误：" + str(e))
     while 1:
-        inp = input('操作：').split(" ")
+        try:
+            inp = input('操作：').split(" ")
+        except KeyboardInterrupt:
+            return 0
         match inp[0]:
             case "导出":
                 if wt_dict == "":
-                    wt_dict = input("输入战争雷霆翻译文件目录：")
+                    wt_dict = input("输入战争雷霆翻译文件目录：").strip('"')
                 atrf_name = input("输入atrf翻译文件名（默认output）：")
                 wt_export(wt_dict, lang_path, atrf_name)
             case "导入":
                 if wt_dict == "":
-                    wt_dict = input("输入战争雷霆游戏翻译文件目录：")
-                atrf_name = input("输入atrf翻译文件：")
+                    wt_dict = input("输入战争雷霆游戏翻译文件目录：").strip('"')
+                atrf_name = input("输入atrf翻译文件：").strip('"')
                 if not os.path.exists(atrf_name):
                     print("atrf文件无效")
                     continue
@@ -228,8 +249,12 @@ def main():
                 try:
                     match inp[1]:
                         case "战雷":
-                            inp_t = ' '.join(inp[2:])
-                            if inp_t == "" or not os.path.exists(inp_t + "/localization.blk"):
+                            inp_t = ' '.join(inp[2:]).strip('"')
+                            if inp_t == "":
+                                config.write({"warthunder_path": ""})
+                                wt_dict = ""
+                                print(f"战争雷霆文件夹已清空")
+                            elif not os.path.exists(inp_t + "/localization.blk"):
                                 print("无效的文件夹，不做任何操作")
                             else:
                                 config.write({"warthunder_path": inp_t})
@@ -252,6 +277,8 @@ def main():
                 except IndexError:
                     print("未知指令\n战雷/git")
                     pass
+            case "quit":
+                quit()
             case "":
                 pass
             case _:
