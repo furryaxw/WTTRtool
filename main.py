@@ -1,5 +1,6 @@
 import os
 import re
+from tqdm import tqdm
 from config import Config
 
 key_pattern = re.compile(';\n"([a-zA-Z0-9_\n]+(?:/[a-zA-Z0-9_\n]+)+)"')
@@ -184,26 +185,40 @@ def main():
         wt_dict = conf["warthunder_path"]
 
     if check_update:
-        try:
-            import git
-        except ImportError:
+        paths = os.environ.get("PATH").split(os.pathsep)
+        git_exist = False
+        for path in paths:
+            if "Git" in path:
+                git_exist = True
+        if not git_exist:
             if not os.path.exists("./Git/cmd/git.exe"):
                 print("检测不到git环境，正在尝试自动安装......")
-                print("下载过程中不会显示进度条，请耐心等待")
+                print("正在下载git可执行文件，请耐心等待")
                 import requests
                 import zipfile
                 url = "https://gitee.com/furryaxw/WTTRtool/releases/download/v1.1fix2/Git.zip"
-                r = requests.get(url, stream=True)
-                with open("git.zip", "wb") as f:
-                    for ch in r:
-                        f.write(ch)
+                f_name = "Git.zip"
+                resp = requests.get(url, stream=True)
+                total = int(resp.headers.get('content-length', 0))
+                with open(f_name, 'wb') as file, tqdm(
+                        desc=f_name,
+                        total=total,
+                        unit='iB',
+                        unit_scale=True,
+                        unit_divisor=1024,
+                ) as bar:
+                    for data in resp.iter_content(chunk_size=1024):
+                        size = file.write(data)
+                        bar.update(size)
                 print("下载完成，正在解压...")
-                zip_file = zipfile.ZipFile("git.zip")
+                zip_file = zipfile.ZipFile(f_name)
                 zip_list = zip_file.namelist()
                 for f in zip_list:
                     zip_file.extract(f, "./")
                 zip_file.close()
-            git.Git.refresh(path='./Git/cmd/git.exe')
+                os.remove("git.zip")
+            os.environ["PATH"] += os.pathsep + os.path.dirname(os.path.abspath("Git/cmd/git.exe"))
+        import git
         print("正在检查更新，请稍后......")
         try:
             if os.path.exists(lang_path):
