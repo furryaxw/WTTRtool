@@ -118,7 +118,7 @@ def write_f(f, d, raw=None):
 def wt_import(f, path, use_local=False):
     global lang_path
     with open(f, "r", encoding='utf-8') as atr:
-        art = re.findall(r'(\[.*\.csv\])(\n[^\[]*)?', atr.read())
+        art = re.findall(r'(\[.*\.csv])(\n[^\[]*)?', atr.read())
     if not use_local:
         exclude = []
         for file in art:
@@ -163,6 +163,7 @@ def main():
         "check_update": True,
         "lang_path": 'WTTR-lang',
         "use_git": 'https://gitee.com/furryaxw/WTTR-lang.git',
+        "git_mode": 'direct',
 
         "use_auto": "None",
         "artf_path": "",
@@ -174,6 +175,7 @@ def main():
         check_update = conf["check_update"]
         lang_path = conf["lang_path"].rstrip('/') + '/'
         git_url = conf["use_git"]
+        git_mode = conf["git_mode"]
         wt_dict = conf["warthunder_path"]
     except KeyError:
         print("检测到更老的配置文件，正在重置......")
@@ -181,6 +183,7 @@ def main():
         conf = config.read()
         check_update = conf["check_update"]
         lang_path = conf["lang_path"]
+        git_mode = conf["git_mode"]
         git_url = conf["use_git"]
         wt_dict = conf["warthunder_path"]
 
@@ -237,6 +240,13 @@ def main():
                     return -1
         except Exception as e:
             print("发生未知错误：" + str(e))
+    if git_mode == "direct":
+        pass
+    elif git_mode == "gszabi99":
+        lang_path = lang_path + "/lang.vromfs.bin_u/lang"
+    else:
+        print("未知的git文件夹模式(direct/gszabi99)")
+        return -1
     while 1:
         try:
             inp = input('操作：').split(" ")
