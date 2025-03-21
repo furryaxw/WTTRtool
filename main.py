@@ -251,7 +251,7 @@ def main():
         print("未知的git文件夹模式(direct/gszabi99)")
         return -1
 
-    wt_import("output.atrf", wt_dict, False)
+    # wt_import("output.atrf", wt_dict, False)
     # return
     while 1:
         try:
