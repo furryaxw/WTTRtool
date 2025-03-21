@@ -252,7 +252,7 @@ def main():
         return -1
 
     wt_import("output.atrf", wt_dict, False)
-    return
+    # return
     while 1:
         try:
             inp = input('操作：').split(" ")
