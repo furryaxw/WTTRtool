@@ -3,7 +3,9 @@ import re
 from tqdm import tqdm
 from config import Config
 
-key_pattern = re.compile(';\n"([a-zA-Z0-9_\n]+(?:/[a-zA-Z0-9_\n]+)+)"')
+# key_pattern = re.compile(';\n"([a-zA-Z0-9_\n]+(?:/[a-zA-Z0-9_\n]+)+)"')
+# key_pattern = re.compile(';\n"([a-zA-Z0-9_\n ]+(?:/[a-zA-Z0-9_\n ]+)+)"')
+key_pattern = re.compile(';\n"([a-zA-Z0-9_\n/ ]+)"')
 lang_path = ""
 
 
@@ -67,13 +69,14 @@ def write_f(f, d, raw=None):
     if raw is None:
         raw = f
     with open(raw, "r", encoding='utf-8') as file:
+        file.seek(0, 0)
         frow = str(file.readline())
-        f_row = frow.split(';')
-        try:
-            cn_loc = f_row.index('"<Chinese>"')
-        except ValueError:
-            return
         reader = file.readlines()
+    f_row = frow.split(';')
+    try:
+        cn_loc = f_row.index('"<Chinese>"')
+    except ValueError:
+        return
 
     with open(f, "w", encoding='utf-8') as file:
         file.write(frow)
@@ -247,6 +250,9 @@ def main():
     else:
         print("未知的git文件夹模式(direct/gszabi99)")
         return -1
+
+    wt_import("output.atrf", wt_dict, False)
+    return
     while 1:
         try:
             inp = input('操作：').split(" ")
